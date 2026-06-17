@@ -316,6 +316,7 @@ select:focus{border-color:#3b82f6}
     </div>
     <div class="modal-footer">
       <a id="mApply" href="#" target="_blank" class="btn-modal-apply">Apply Now ↗</a>
+      <a id="mCompanySite" href="#" target="_blank" class="btn-modal-close" style="text-decoration:none;display:inline-flex;align-items:center">Company Site ↗</a>
       <button class="btn-docs" onclick="(function(){var id=currentId;closeModal();openDocsPanel(id);})()">📄 Generate Docs</button>
       <button class="btn-modal-close" onclick="closeModal()">Close</button>
     </div>
@@ -422,7 +423,7 @@ function renderCard(job){
         <div class="source">via ${esc(job.source||'')}</div>
       </div>
       <div class="card-btns" onclick="event.stopPropagation()">
-        <a class="btn-apply" href="${esc(job.url)}" target="_blank" rel="noopener">Apply ↗</a>
+        <a class="btn-apply" href="${applyUrl(job)}" target="_blank" rel="noopener">Apply ↗</a>
         <button class="btn-save${st==='saved'?' on':''}" onclick="quickSave('${job.id}',this)">${saveLbl}</button>
       </div>
     </div>
@@ -430,6 +431,15 @@ function renderCard(job){
 }
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+
+function applyUrl(job) {
+  // Scraped jobs have real direct URLs — use them
+  if (job.source === 'RemoteOK' || job.source === 'WeWorkRemotely') return job.url;
+  // Curated jobs have generic career pages — search LinkedIn for the exact role
+  const q = encodeURIComponent(job.title + ' ' + job.company);
+  const loc = encodeURIComponent(job.location);
+  return `https://www.linkedin.com/jobs/search/?keywords=${q}&location=${loc}&f_TPR=r604800`;
+}
 
 function quickSave(id, btn){
   const cur=store.status(id);
@@ -471,7 +481,10 @@ function openModal(id){
   document.getElementById('mDesc').textContent=job.description||'Click Apply to view the full job description on the company site.';
   document.getElementById('mStatus').value=st;
   document.getElementById('mNotes').value=store.notes(id);
-  document.getElementById('mApply').href=job.url;
+  document.getElementById('mApply').href=applyUrl(job);
+  document.getElementById('mApply').textContent=job.source==='Curated'?'Search LinkedIn ↗':'Apply Now ↗';
+  document.getElementById('mCompanySite').href=job.url;
+  document.getElementById('mCompanySite').style.display=job.source==='Curated'?'inline-flex':'none';
   document.getElementById('overlay').classList.add('open');
 }
 
